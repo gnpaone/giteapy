@@ -37,7 +37,7 @@ jobs:
         uses: peter-evans/create-pull-request@v7
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          commit-message: ${{ steps.lastcommit.outputs.pull-request-number }}
+          commit-message: ${{ steps.lastcommit.outputs.description }}
           committer: gnpaone <78990165+gnpaone@users.noreply.github.com>
           author: gnpaone <78990165+gnpaone@users.noreply.github.com>
           branch: sync-action
