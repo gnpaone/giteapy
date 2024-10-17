@@ -50,16 +50,15 @@ jobs:
         uses: peter-evans/create-pull-request@v7
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          commit-message: "update version & modify lockfile"
+          commit-message: "update package version"
           committer: gnpaone <78990165+gnpaone@users.noreply.github.com>
           author: gnpaone <78990165+gnpaone@users.noreply.github.com>
-          branch: npm-update
+          branch: version-update
           base: master
           add-paths: |
-            npm/rust-just/package.json
-            npm/rust-just/yarn.lock
+            setup.py
           delete-branch: true
-          title: Bump npm package version
+          title: Bump python package version
           labels: ":mag_right: bump"
       
       - name: Enable pull request automerge
