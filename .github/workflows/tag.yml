@@ -20,34 +20,35 @@ jobs:
           regex: '^\d+\.\d+\.\d+$'
         id: sourcetag
 
-      # - name: Find latest tag of target repo
-      #   uses: oprypin/find-latest-tag@v1
-      #   with:
-      #     repository: gnpaone/giteapy
-      #   id: targettag
+      - name: Find latest tag of target repo
+        uses: oprypin/find-latest-tag@v1
+        with:
+          repository: gnpaone/giteapy
+        id: targettag
 
       - run: npm install semver
 
-      # - name: Check for new tag
-      #   uses: actions/github-script@v7
-      #   id: tag-chk
-      #   with:
-      #     script: |
-      #       const semver = require('semver');
+      - name: Check for new tag
+        uses: actions/github-script@v7
+        id: tag-chk
+        with:
+          script: |
+            const semver = require('semver');
 
-      #       const ver1 = `${{ steps.sourcetag.outputs.tag }}`;
-      #       const ver2 = `${{ steps.targettag.outputs.tag }}`;
+            const ver1 = `${{ steps.sourcetag.outputs.tag }}`;
+            const ver2 = `${{ steps.targettag.outputs.tag }}`;
 
-      #       if (semver.gt(ver1, ver2)) {
-      #         core.setOutput('create_tag', true);
-      #       } else {
-      #         core.setOutput('create_tag', false);
-      #       }
+            if (semver.gt(ver1, ver2)) {
+              core.setOutput('create_tag', true);
+            } else {
+              core.setOutput('create_tag', false);
+            }
 
       - name: Update version in setup.py
         run: sed -i 's/VERSION = "[^"]*"/VERSION = "${{ steps.sourcetag.outputs.tag }}"/' setup.py
 
       - name: Create PR
+        if: steps.tag-chk.outputs.create_tag == 'true'
         id: cpr
         uses: peter-evans/create-pull-request@v7
         with:
@@ -76,10 +77,11 @@ jobs:
           numbers: ${{ steps.cpr.outputs.pull-request-number }}
       
       - name: Trigger tag creation
-        # if: steps.tag-chk.outputs.create_tag == 'true'
+        if: steps.tag-chk.outputs.create_tag == 'true'
         uses: qoomon/actions--create-tag@v1.0.0
         with:
           name: ${{ steps.sourcetag.outputs.tag }}
 
-      - run: git push origin ${{ steps.sourcetag.outputs.tag }}
+      - if: steps.tag-chk.outputs.create_tag == 'true'
+        run: git push origin ${{ steps.sourcetag.outputs.tag }}
           
