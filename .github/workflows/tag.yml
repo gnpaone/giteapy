@@ -94,6 +94,8 @@ jobs:
         with:
           repository: gnpaone/giteapy
           branch: master
+
+      - run: echo ${{ steps.lastcommit.outputs.shorthash }}
           
       - uses: actions/checkout@v4
         with:
