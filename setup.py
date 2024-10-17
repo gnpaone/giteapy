@@ -18,7 +18,7 @@ def read_readme():
         return f.read()
 
 NAME = "giteapy"
-VERSION = "1.21.0"
+VERSION = "1.22.0"
 
 # To install the library, run the following
 #
