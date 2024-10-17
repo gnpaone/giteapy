@@ -8,11 +8,12 @@ on:
       - completed
 
 jobs:
-  check-and-create:
+  check:
     runs-on: ubuntu-latest
+    outputs:
+      sourcetag: ${{ steps.sourcetag.outputs.tag }}
+      # create_tag: ${{ steps.tag-chk.outputs.create_tag }}
     steps:
-      - uses: actions/checkout@v4
-      
       - name: Find latest tag of source repo
         uses: oprypin/find-latest-tag@v1
         with:
@@ -20,36 +21,41 @@ jobs:
           regex: '^\d+\.\d+\.\d+$'
         id: sourcetag
 
-      - name: Find latest tag of target repo
-        uses: oprypin/find-latest-tag@v1
-        with:
-          repository: gnpaone/giteapy
-        id: targettag
+      # - name: Find latest tag of target repo
+      #   uses: oprypin/find-latest-tag@v1
+      #   with:
+      #     repository: gnpaone/giteapy
+      #   id: targettag
 
-      - run: npm install semver
+      # - run: npm install semver
 
-      - name: Check for new tag
-        uses: actions/github-script@v7
-        id: tag-chk
-        with:
-          script: |
-            const semver = require('semver');
+      # - name: Check for new tag
+      #   uses: actions/github-script@v7
+      #   id: tag-chk
+      #   with:
+      #     script: |
+      #       const semver = require('semver');
 
-            const ver1 = `${{ steps.sourcetag.outputs.tag }}`;
-            const ver2 = `${{ steps.targettag.outputs.tag }}`;
+      #       const ver1 = `${{ steps.sourcetag.outputs.tag }}`;
+      #       const ver2 = `${{ steps.targettag.outputs.tag }}`;
 
-            if (semver.gt(ver1, ver2)) {
-              core.setOutput('create_tag', true);
-            } else {
-              core.setOutput('create_tag', false);
-            }
+      #       if (semver.gt(ver1, ver2)) {
+      #         core.setOutput('create_tag', true);
+      #       } else {
+      #         core.setOutput('create_tag', false);
+      #       }
+
+  update:
+    runs-on: ubuntu-latest
+    needs: check
+    # if: needs.check.outputs.create_tag == 'true'
+    steps:
+      - uses: actions/checkout@v4
 
       - name: Update version in setup.py
-        if: steps.tag-chk.outputs.create_tag == 'true'
-        run: sed -i 's/VERSION = "[^"]*"/VERSION = "${{ steps.sourcetag.outputs.tag }}"/' setup.py
+        run: sed -i 's/VERSION = "[^"]*"/VERSION = "${{ needs.check.outputs.sourcetag }}"/' setup.py
 
       - name: Create PR
-        if: steps.tag-chk.outputs.create_tag == 'true'
         id: cpr
         uses: peter-evans/create-pull-request@v7
         with:
@@ -62,27 +68,31 @@ jobs:
           add-paths: setup.py
           title: Bump python package version
           labels: ":mag_right: bump"
-      
+
       - name: Enable pull request automerge
         if: steps.cpr.outputs.pull-request-operation == 'created'
         uses: peter-evans/enable-pull-request-automerge@v3
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           pull-request-number: ${{ steps.cpr.outputs.pull-request-number }}
-      
+
       - name: Delete PRs head branch
         if: steps.cpr.outputs.pull-request-operation == 'created'
         uses: dawidd6/action-delete-branch@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           numbers: ${{ steps.cpr.outputs.pull-request-number }}
-      
+
+  create:
+    runs-on: ubuntu-latest
+    needs: [check, update]
+    # if: needs.check.outputs.create_tag == 'true'
+    steps:
+      - uses: actions/checkout@v4
+
       - name: Trigger tag creation
-        if: steps.tag-chk.outputs.create_tag == 'true'
         uses: qoomon/actions--create-tag@v1.0.0
         with:
-          name: ${{ steps.sourcetag.outputs.tag }}
+          name: ${{ needs.check.outputs.sourcetag }}
 
-      - if: steps.tag-chk.outputs.create_tag == 'true'
-        run: git push origin ${{ steps.sourcetag.outputs.tag }}
-          
+      - run: git push origin ${{ needs.check.outputs.sourcetag }}
