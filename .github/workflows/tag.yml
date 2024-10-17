@@ -42,6 +42,40 @@ jobs:
       #         core.setOutput('create_tag', false);
       #       }
 
+      - name: Update version in setup.py
+        run: sed -i 's/VERSION = "[^"]*"/VERSION = "${{ steps.sourcetag.outputs.tag }}"/' setup.py
+
+      - name: Create PR
+        id: cpr
+        uses: peter-evans/create-pull-request@v7
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: "update version & modify lockfile"
+          committer: gnpaone <78990165+gnpaone@users.noreply.github.com>
+          author: gnpaone <78990165+gnpaone@users.noreply.github.com>
+          branch: npm-update
+          base: master
+          add-paths: |
+            npm/rust-just/package.json
+            npm/rust-just/yarn.lock
+          delete-branch: true
+          title: Bump npm package version
+          labels: ":mag_right: bump"
+      
+      - name: Enable pull request automerge
+        if: steps.cpr.outputs.pull-request-operation == 'created'
+        uses: peter-evans/enable-pull-request-automerge@v3
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          pull-request-number: ${{ steps.cpr.outputs.pull-request-number }}
+      
+      - name: Delete PRs head branch
+        if: steps.cpr.outputs.pull-request-operation == 'created'
+        uses: dawidd6/action-delete-branch@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          numbers: ${{ steps.cpr.outputs.pull-request-number }}
+      
       - name: Trigger tag creation
         # if: steps.tag-chk.outputs.create_tag == 'true'
         uses: qoomon/actions--create-tag@v1.0.0
