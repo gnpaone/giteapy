@@ -1,0 +1,62 @@
+name: Sync repo
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 0 * * sun'
+
+jobs:
+  commits:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/checkout@v4
+        with:
+          repository: mg-cloud/giteapy
+          token: ${{ secrets.GITHUB_TOKEN }}
+          path: ./.sync-repo
+          ref: master
+  
+      - name: Replace files
+        shell: bash
+        run: |
+          rm -rf ./.sync-repo/.git  
+          rsync -av --exclude='setup.py' ./.sync-repo/ .
+          rm -rf ./.sync-repo/
+
+      - name: Get last commit details from source repo
+        id: lastcommit
+        uses: nmbgeek/github-action-get-latest-commit@v0.1.0
+        with:
+          repository: mg-cloud/giteapy
+          branch: master
+  
+      - name: Create PR
+        id: cpr
+        uses: peter-evans/create-pull-request@v7
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: ${{ steps.lastcommit.outputs.pull-request-number }}
+          committer: gnpaone <78990165+gnpaone@users.noreply.github.com>
+          author: gnpaone <78990165+gnpaone@users.noreply.github.com>
+          branch: sync-action
+          base: master
+          delete-branch: true
+          title: Sync source repo
+          labels: ":zap: pull"
+
+      - name: Enable pull request automerge
+        if: steps.cpr.outputs.pull-request-operation == 'created'
+        uses: peter-evans/enable-pull-request-automerge@v3
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          pull-request-number: ${{ steps.cpr.outputs.pull-request-number }}
+
+      - name: Delete PRs head branch
+        if: steps.cpr.outputs.pull-request-operation == 'created'
+        uses: dawidd6/action-delete-branch@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          numbers: ${{ steps.cpr.outputs.pull-request-number }}
+          
