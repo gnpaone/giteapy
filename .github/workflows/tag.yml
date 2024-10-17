@@ -52,7 +52,7 @@ jobs:
         uses: peter-evans/create-pull-request@v7
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          commit-message: "update package version"
+          commit-message: "Update package version"
           committer: gnpaone <78990165+gnpaone@users.noreply.github.com>
           author: gnpaone <78990165+gnpaone@users.noreply.github.com>
           branch: version-update
@@ -75,11 +75,11 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           numbers: ${{ steps.cpr.outputs.pull-request-number }}
       
-      # - name: Trigger tag creation
-      #   # if: steps.tag-chk.outputs.create_tag == 'true'
-      #   uses: qoomon/actions--create-tag@v1.0.0
-      #   with:
-      #     name: ${{ steps.sourcetag.outputs.tag }}
+      - name: Trigger tag creation
+        # if: steps.tag-chk.outputs.create_tag == 'true'
+        uses: qoomon/actions--create-tag@v1.0.0
+        with:
+          name: ${{ steps.sourcetag.outputs.tag }}
 
-      # - run: git push origin ${{ steps.sourcetag.outputs.tag }}
+      - run: git push origin ${{ steps.sourcetag.outputs.tag }}
           
