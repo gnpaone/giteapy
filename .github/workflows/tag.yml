@@ -88,7 +88,16 @@ jobs:
     needs: [check, update]
     # if: needs.check.outputs.create_tag == 'true'
     steps:
+      - name: Get last commit
+        id: lastcommit
+        uses: nmbgeek/github-action-get-latest-commit@v0.1.0
+        with:
+          repository: gnpaone/giteapy
+          branch: master
+          
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ steps.lastcommit.outputs.hash }}
 
       - name: Trigger tag creation
         uses: qoomon/actions--create-tag@v1.0.0
