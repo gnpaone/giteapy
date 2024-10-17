@@ -45,6 +45,7 @@ jobs:
             }
 
       - name: Update version in setup.py
+        if: steps.tag-chk.outputs.create_tag == 'true'
         run: sed -i 's/VERSION = "[^"]*"/VERSION = "${{ steps.sourcetag.outputs.tag }}"/' setup.py
 
       - name: Create PR
