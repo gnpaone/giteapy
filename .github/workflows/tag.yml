@@ -2,10 +2,10 @@ name: Create tag
 
 on:
   workflow_dispatch:
-  # workflow_run:
-  #   workflows: ["Sync repo"]
-  #   types:
-  #     - completed
+  workflow_run:
+    workflows: ["Sync repo"]
+    types:
+      - completed
 
 jobs:
   check-and-create:
