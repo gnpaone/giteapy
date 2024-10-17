@@ -11,6 +11,8 @@ jobs:
   check-and-create:
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
+      
       - name: Find latest tag of source repo
         uses: oprypin/find-latest-tag@v1
         with:
